@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">MUSTASE</string>
+    <string name="task_1">Task 1</string>
+    <string name="task_2">Task 2</string>
+    <string name="task_3">Task 3</string>
+    <string name="add_task">Add task</string>
+    <string name="delete_task">Supprimer la tâche</string>
+    <string name="edit_task">Éditer la tâche</string>
+    <string name="task_title_hint">Titre de la tâche</string>
+    <string name="task_description_hint">Description de la tâche</string>
+    <string name="validate_task">Valider</string>
+    <string name="share_task">Partager</string>
 </resources>
