@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
@@ -20,23 +19,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mustase.list.Task
+import com.example.mustase.list.TaskListViewModel
 import com.example.mustase.ui.theme.TodoTheme
-import kotlinx.coroutines.launch
-import java.util.UUID
 
 // Navigation screens
 sealed class Screen {
     data object List : Screen()
-    data class Detail(val task: Task) : Screen()
+    data class Detail(val task: Task?) : Screen()
 }
 
 class ComposeActivity : ComponentActivity() {
@@ -60,19 +55,7 @@ class ComposeActivity : ComponentActivity() {
 fun App() {
     val backStack = remember { mutableStateListOf<Screen>(Screen.List) }
     val context = LocalContext.current
-
-    var items by remember {
-        mutableStateOf(List(100) {
-            Task(
-                id = "id_$it",
-                title = "Task #$it",
-                description = "Description for task #$it"
-            )
-        })
-    }
-
-    val listState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
+    val viewModel: TaskListViewModel = viewModel()
 
     val currentScreen = backStack.lastOrNull() ?: Screen.List
 
@@ -100,15 +83,7 @@ fun App() {
             if (currentScreen is Screen.List) {
                 FloatingActionButton(
                     onClick = {
-                        val newItem = Task(
-                            id = UUID.randomUUID().toString(),
-                            title = "Task #${items.size}",
-                            description = "Description for task #${items.size}"
-                        )
-                        items = items + newItem
-                        coroutineScope.launch {
-                            listState.animateScrollToItem(items.size - 1)
-                        }
+                        backStack.add(Screen.Detail(null))
                     }
                 ) {
                     Icon(
@@ -121,14 +96,10 @@ fun App() {
     ) { innerPadding ->
         when (currentScreen) {
             Screen.List -> {
-                ListScreenWrapper(
-                    items = items,
-                    listState = listState,
+                ListScreen(
+                    viewModel = viewModel,
                     onTaskClick = { task ->
                         backStack.add(Screen.Detail(task))
-                    },
-                    onTaskDelete = { task ->
-                        items = items - task
                     },
                     modifier = Modifier.padding(innerPadding)
                 )
@@ -136,13 +107,13 @@ fun App() {
             is Screen.Detail -> {
                 DetailScreen(
                     task = currentScreen.task,
-                    onBack = {
+                    viewModel = viewModel,
+                    onNavigateBack = {
                         backStack.removeLastOrNull()
-                    }
+                    },
+                    modifier = Modifier.padding(innerPadding)
                 )
             }
         }
     }
 }
-
-
