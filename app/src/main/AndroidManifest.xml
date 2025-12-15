@@ -11,14 +11,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MUSTASE">
         <activity
-            android:name=".MainActivity"
-            android:exported="true">
+            android:name=".ComposeActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
+        </activity>
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
             <!-- Intent filter pour recevoir du texte partagé -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />

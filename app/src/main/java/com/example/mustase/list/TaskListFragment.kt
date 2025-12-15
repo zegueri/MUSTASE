@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.commit
 import com.example.mustase.R
 import com.example.mustase.databinding.FragmentTaskListBinding
 import com.example.mustase.detail.DetailFragment
@@ -26,10 +25,10 @@ class TaskListFragment : Fragment() {
         override fun onClickEdit(task: Task) {
             // Naviguer vers DetailFragment pour éditer la tâche
             val fragment = DetailFragment(task.id)
-            parentFragmentManager.commit {
-                replace(R.id.fragment_container, fragment, null)
-                addToBackStack(null)
-            }
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit()
             // Envoyer les données de la tâche au fragment
             parentFragmentManager.setFragmentResult(
                 DetailFragment.TASK_DATA_REQUEST_KEY,
@@ -109,10 +108,10 @@ class TaskListFragment : Fragment() {
         binding.fabAddTask.setOnClickListener {
             // Naviguer vers DetailFragment pour ajouter une nouvelle tâche
             val fragment = DetailFragment()
-            parentFragmentManager.commit {
-                replace(R.id.fragment_container, fragment, null)
-                addToBackStack(null)
-            }
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit()
         }
     }
 

@@ -6,7 +6,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.fragment.app.commit
 import com.example.mustase.detail.DetailFragment
 
 class MainActivity : AppCompatActivity() {
@@ -35,10 +34,10 @@ class MainActivity : AppCompatActivity() {
             sharedText?.let {
                 // Naviguer vers DetailFragment avec la description pré-remplie
                 val fragment = DetailFragment(initialDescription = it)
-                supportFragmentManager.commit {
-                    replace(R.id.fragment_container, fragment, null)
-                    addToBackStack(null)
-                }
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null)
+                    .commit()
             }
         }
     }
