@@ -283,5 +283,14 @@ class PrescriptionRepository(
             }
         }
     }
+
+    /**
+     * Met à jour une prescription (titre, etc.)
+     */
+    suspend fun updatePrescription(prescription: PrescriptionEntity) {
+        withContext(Dispatchers.IO) {
+            prescriptionDao.updatePrescription(prescription)
+        }
+    }
 }
 

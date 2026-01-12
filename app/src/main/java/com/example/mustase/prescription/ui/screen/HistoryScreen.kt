@@ -197,8 +197,7 @@ private fun PrescriptionItem(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = prescription.extractedText.lines().firstOrNull()?.take(50)
-                        ?: "Ordonnance",
+                    text = prescription.title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,

@@ -9,13 +9,22 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.mustase.prescription.ui.screen.DetailScreen
 import com.example.mustase.prescription.ui.screen.HistoryScreen
+import com.example.mustase.prescription.ui.screen.ReminderScreen
 import com.example.mustase.prescription.ui.screen.ScanScreen
+import java.net.URLDecoder
+import java.net.URLEncoder
 
 sealed class Screen(val route: String) {
     data object History : Screen("history")
     data object Scan : Screen("scan")
     data object Detail : Screen("detail/{id}") {
         fun createRoute(id: Long) = "detail/$id"
+    }
+    data object Reminder : Screen("reminder/{id}/{text}") {
+        fun createRoute(id: Long, text: String): String {
+            val encodedText = URLEncoder.encode(text, "UTF-8")
+            return "reminder/$id/$encodedText"
+        }
     }
 }
 
@@ -62,6 +71,29 @@ fun PrescriptionNavHost(
             val prescriptionId = backStackEntry.arguments?.getLong("id") ?: 0L
             DetailScreen(
                 prescriptionId = prescriptionId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToReminders = { id, text ->
+                    navController.navigate(Screen.Reminder.createRoute(id, text))
+                }
+            )
+        }
+
+        // Écran de configuration des rappels
+        composable(
+            route = Screen.Reminder.route,
+            arguments = listOf(
+                navArgument("id") { type = NavType.LongType },
+                navArgument("text") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val prescriptionId = backStackEntry.arguments?.getLong("id") ?: 0L
+            val encodedText = backStackEntry.arguments?.getString("text") ?: ""
+            val extractedText = URLDecoder.decode(encodedText, "UTF-8")
+            ReminderScreen(
+                prescriptionId = prescriptionId,
+                extractedText = extractedText,
                 onNavigateBack = {
                     navController.popBackStack()
                 }

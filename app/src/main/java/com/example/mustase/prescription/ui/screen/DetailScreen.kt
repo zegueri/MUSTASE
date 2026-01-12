@@ -1,5 +1,6 @@
 package com.example.mustase.prescription.ui.screen
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -8,12 +9,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -29,10 +33,16 @@ import java.util.*
 fun DetailScreen(
     prescriptionId: Long,
     onNavigateBack: () -> Unit,
+    onNavigateToReminders: (Long, String) -> Unit,
     viewModel: DetailViewModel = koinViewModel { parametersOf(prescriptionId) }
 ) {
+    val context = LocalContext.current
     val state by viewModel.state.collectAsState()
+    val reminders by viewModel.reminders.collectAsState()
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showEditTitleDialog by remember { mutableStateOf(false) }
+    var editedTitle by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Dialog de confirmation de suppression
     if (showDeleteDialog) {
@@ -61,12 +71,50 @@ fun DetailScreen(
         )
     }
 
+    // Dialog d'édition du titre
+    if (showEditTitleDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditTitleDialog = false },
+            title = { Text("Modifier le titre") },
+            text = {
+                OutlinedTextField(
+                    value = editedTitle,
+                    onValueChange = { editedTitle = it },
+                    label = { Text("Titre de l'ordonnance") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (editedTitle.isNotBlank()) {
+                            viewModel.updateTitle(editedTitle.trim())
+                        }
+                        showEditTitleDialog = false
+                    }
+                ) {
+                    Text("Enregistrer")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditTitleDialog = false }) {
+                    Text("Annuler")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
+                    val currentTitle = when (val s = state) {
+                        is DetailViewModel.DetailState.Success -> s.prescription.title
+                        else -> "Détails"
+                    }
                     Text(
-                        "📄 Détails",
+                        "📄 $currentTitle",
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -80,6 +128,40 @@ fun DetailScreen(
                 },
                 actions = {
                     if (state is DetailViewModel.DetailState.Success) {
+                        val prescription = (state as DetailViewModel.DetailState.Success).prescription
+                        // Bouton éditer titre
+                        IconButton(onClick = {
+                            editedTitle = prescription.title
+                            showEditTitleDialog = true
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Modifier le titre"
+                            )
+                        }
+                        // Bouton partager
+                        IconButton(onClick = {
+                            val shareText = buildString {
+                                appendLine("📋 ${prescription.title}")
+                                appendLine("📅 ${formatDate(prescription.timestamp)}")
+                                appendLine()
+                                appendLine("📝 Texte extrait :")
+                                appendLine(prescription.extractedText)
+                            }
+                            val sendIntent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_TEXT, shareText)
+                                type = "text/plain"
+                            }
+                            val shareIntent = Intent.createChooser(sendIntent, "Partager l'ordonnance")
+                            context.startActivity(shareIntent)
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "Partager"
+                            )
+                        }
+                        // Bouton supprimer
                         IconButton(onClick = { showDeleteDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
@@ -94,7 +176,8 @@ fun DetailScreen(
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         when (val currentState = state) {
             is DetailViewModel.DetailState.Loading -> {
@@ -219,6 +302,33 @@ fun DetailScreen(
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
+
+                        // Bouton de rappels
+                        Button(
+                            onClick = {
+                                onNavigateToReminders(prescriptionId, prescription.extractedText)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Configurer les rappels")
+                            if (reminders.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Badge {
+                                    Text("${reminders.size}")
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         // Bouton de suppression
                         OutlinedButton(

@@ -96,4 +96,7 @@ dependencies {
 
     // Navigation Compose
     implementation(libs.navigation.compose)
+
+    // WorkManager pour les rappels
+    implementation(libs.workmanager)
 }

@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class PrescriptionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val title: String = "Ordonnance",
     val imageUri: String,
     val extractedText: String,
     val timestamp: Long = System.currentTimeMillis()

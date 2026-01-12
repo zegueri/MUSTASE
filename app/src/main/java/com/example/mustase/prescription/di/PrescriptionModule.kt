@@ -4,8 +4,10 @@ import androidx.room.Room
 import com.example.mustase.prescription.data.local.PrescriptionDatabase
 import com.example.mustase.prescription.data.remote.OcrWebService
 import com.example.mustase.prescription.data.repository.PrescriptionRepository
+import com.example.mustase.prescription.data.repository.ReminderRepository
 import com.example.mustase.prescription.ui.viewmodel.DetailViewModel
 import com.example.mustase.prescription.ui.viewmodel.HistoryViewModel
+import com.example.mustase.prescription.ui.viewmodel.ReminderViewModel
 import com.example.mustase.prescription.ui.viewmodel.ScanViewModel
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -26,11 +28,14 @@ val prescriptionModule = module {
             androidContext(),
             PrescriptionDatabase::class.java,
             "prescription_database"
-        ).build()
+        )
+        .fallbackToDestructiveMigration()
+        .build()
     }
 
-    // DAO
+    // DAOs
     single { get<PrescriptionDatabase>().prescriptionDao() }
+    single { get<PrescriptionDatabase>().reminderDao() }
 
     // OkHttpClient avec timeout augmenté pour l'OCR
     single {
@@ -74,9 +79,17 @@ val prescriptionModule = module {
         )
     }
 
+    single {
+        ReminderRepository(
+            reminderDao = get(),
+            context = androidContext()
+        )
+    }
+
     // ViewModels
     viewModel { HistoryViewModel(get()) }
     viewModel { ScanViewModel(get()) }
-    viewModel { (prescriptionId: Long) -> DetailViewModel(get(), prescriptionId) }
+    viewModel { (prescriptionId: Long) -> DetailViewModel(get(), get(), prescriptionId) }
+    viewModel { (prescriptionId: Long) -> ReminderViewModel(get(), prescriptionId) }
 }
 
